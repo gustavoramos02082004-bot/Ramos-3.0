@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "SISTEMA",
+      "hasCanvas": false,
+      "bodyTextLen": 166,
+      "bodyTextHash": "43f67d8849f8b08da5af667b59e84761d617144da200b5c1554da083267a3928",
+      "bodyTextPrefix": "SISTEMA Você foi escolhido. Daqui em diante há missão diária, pe",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "SISTEMA",
+      "hasCanvas": false,
+      "bodyTextLen": 166,
+      "bodyTextHash": "43f67d8849f8b08da5af667b59e84761d617144da200b5c1554da083267a3928",
+      "bodyTextPrefix": "SISTEMA Você foi escolhido. Daqui em diante há missão diária, pe",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
+}
