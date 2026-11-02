@@ -86,6 +86,7 @@ export type Data = {
   bestStreak: number;
   totalMissions: number;
   ranksCleared: RankId[];
+  dungeonsCleared: RankId[];
   lastSeenDate: string | null;
   penalty: Penalty;
   log: LogEntry[];
@@ -93,4 +94,7 @@ export type Data = {
 
 export type Toast = { id: string; text: string; tone: "info" | "good" | "bad" };
 
-export type Fanfare = { kind: "level"; level: number } | { kind: "rank"; rank: RankId; title: string };
+export type Fanfare =
+  | { kind: "level"; level: number }
+  | { kind: "rank"; rank: RankId; title: string }
+  | { kind: "arise"; summonId: string };

@@ -105,14 +105,68 @@ export type SummonDef = {
   lore: string;
   bonus: Bonus;
   power: number;
+  dungeon: RankId;
 };
 
 export const SUMMONS: SummonDef[] = [
-  { id: "sentinela", name: "Sentinela de Cinza", title: "Guardião", lore: "Um lobo de pedra. Só caminha com quem não falta ao próprio treino.", bonus: { vit: 4, wil: 2 }, power: 40 },
-  { id: "coruja", name: "Coruja de Vigília", title: "Observadora", lore: "Enxerga o dia que você tenta esconder de si mesmo.", bonus: { per: 4, int: 2 }, power: 36 },
-  { id: "lamina", name: "Lâmina Errante", title: "Algoz", lore: "Uma espada sem mão. Fiel apenas à decisão já tomada.", bonus: { str: 5, agi: 2 }, power: 55 },
-  { id: "vulto", name: "O Primeiro Vulto", title: "Sombra maior", lore: "Não é um servo. É a prova de que você não volta atrás.", bonus: { str: 3, wil: 4, int: 2 }, power: 90 },
+  { id: "sentinela", name: "Sentinela de Cinza", title: "Guardião", lore: "Um lobo de pedra. Só caminha com quem não falta ao próprio treino.", bonus: { vit: 4, wil: 2 }, power: 40, dungeon: "D" },
+  { id: "coruja", name: "Coruja de Vigília", title: "Observadora", lore: "Enxerga o dia que você tenta esconder de si mesmo.", bonus: { per: 4, int: 2 }, power: 50, dungeon: "C" },
+  { id: "lamina", name: "Lâmina Errante", title: "Algoz", lore: "Uma espada sem mão. Fiel apenas à decisão já tomada.", bonus: { str: 5, agi: 2 }, power: 70, dungeon: "B" },
+  { id: "cavaleiro", name: "Cavaleiro do Juramento", title: "Cavaleiro", lore: "Jurou proteger um rei que caiu. Agora jura por você.", bonus: { vit: 5, str: 3, wil: 2 }, power: 95, dungeon: "A" },
+  { id: "vulto", name: "O Primeiro Vulto", title: "Sombra maior", lore: "Não é um servo. É a prova de que você não volta atrás.", bonus: { str: 3, wil: 4, int: 2 }, power: 130, dungeon: "S" },
+  { id: "rei", name: "Rei das Cinzas", title: "Marechal", lore: "Governou o Véu por mil anos. Ajoelhou-se uma única vez.", bonus: { str: 5, vit: 4, agi: 3, int: 3, per: 3, wil: 5 }, power: 200, dungeon: "M" },
 ];
+
+export type EnemyDef = { name: string; hp: number; atk: number };
+
+export type DungeonDef = {
+  id: RankId;
+  name: string;
+  blurb: string;
+  power: number;
+  waves: EnemyDef[];
+  boss: EnemyDef;
+  summonId: string;
+  gold: number;
+  xp: number;
+};
+
+export const DUNGEONS: DungeonDef[] = [
+  {
+    id: "D", name: "Covil de Pedra", blurb: "Uma caverna onde lobos de rocha vigiam o próprio alfa.", power: 160,
+    waves: [{ name: "Lobo de Pedra", hp: 110, atk: 16 }, { name: "Matilha de Pedra", hp: 150, atk: 18 }],
+    boss: { name: "Sentinela de Cinza", hp: 420, atk: 28 }, summonId: "sentinela", gold: 260, xp: 180,
+  },
+  {
+    id: "C", name: "Torre da Vigília", blurb: "Corvos sem olhos guardam a escada. No topo, algo observa.", power: 240,
+    waves: [{ name: "Corvo Sem Olhos", hp: 170, atk: 20 }, { name: "Revoada Cega", hp: 220, atk: 23 }],
+    boss: { name: "Coruja de Vigília", hp: 620, atk: 34 }, summonId: "coruja", gold: 420, xp: 300,
+  },
+  {
+    id: "B", name: "Arsenal Esquecido", blurb: "Armaduras vazias ainda marcham. Uma lâmina flutua no centro.", power: 380,
+    waves: [{ name: "Armadura Oca", hp: 270, atk: 26 }, { name: "Guarda do Arsenal", hp: 340, atk: 30 }],
+    boss: { name: "Lâmina Errante", hp: 980, atk: 42 }, summonId: "lamina", gold: 700, xp: 480,
+  },
+  {
+    id: "A", name: "Fortaleza Partida", blurb: "Os muros caíram. O juramento do cavaleiro, não.", power: 540,
+    waves: [{ name: "Soldado Juramentado", hp: 380, atk: 32 }, { name: "Porta-estandarte", hp: 470, atk: 37 }],
+    boss: { name: "Cavaleiro do Juramento", hp: 1400, atk: 54 }, summonId: "cavaleiro", gold: 1100, xp: 720,
+  },
+  {
+    id: "S", name: "Abismo do Vulto", blurb: "Não há chão. Só ecos de tudo o que você quase desistiu.", power: 780,
+    waves: [{ name: "Eco do Abismo", hp: 550, atk: 40 }, { name: "Coro de Ecos", hp: 680, atk: 46 }],
+    boss: { name: "O Primeiro Vulto", hp: 2000, atk: 66 }, summonId: "vulto", gold: 1800, xp: 1100,
+  },
+  {
+    id: "M", name: "Trono do Véu", blurb: "A sala do trono do Monarca anterior. Ele ainda não saiu do lugar.", power: 1100,
+    waves: [{ name: "Guarda Real do Véu", hp: 780, atk: 50 }, { name: "Cavaleiros do Trono", hp: 950, atk: 57 }],
+    boss: { name: "Rei das Cinzas", hp: 2900, atk: 84 }, summonId: "rei", gold: 3500, xp: 1800,
+  },
+];
+
+export const DUNGEON_BY_ID = Object.fromEntries(DUNGEONS.map((d) => [d.id, d])) as Record<RankId, DungeonDef>;
+
+export const DUNGEON_FATIGUE = 20;
 
 export const SUMMON_BY_ID = Object.fromEntries(SUMMONS.map((s) => [s.id, s]));
 
@@ -126,23 +180,23 @@ export type RankDef = {
   power: number;
   missions: number;
   skills: number;
-  summons: number;
+  /** Dungeon que precisa estar concluída antes de tentar este rank. */
+  dungeon?: RankId;
   gold: number;
   points: number;
-  summonId?: string;
   skillId?: string;
   trial: "hold" | "memory" | "pulse" | "precision" | "abyss" | "oath";
   blurb: string;
 };
 
 export const RANKS: RankDef[] = [
-  { id: "E", name: "Rank E", title: "Desperto", job: "Desperto", level: 1, streak: 0, power: 0, missions: 0, skills: 0, summons: 0, gold: 80, points: 3, trial: "hold", blurb: "Segure o selo. Existir já é a primeira prova." },
-  { id: "D", name: "Rank D", title: "Rastreado", job: "Rastreado", level: 4, streak: 3, power: 160, missions: 4, skills: 0, summons: 0, gold: 200, points: 4, summonId: "sentinela", trial: "memory", blurb: "Três dias sem falhar. Depois, repita a sequência que o sistema mostrar." },
-  { id: "C", name: "Rank C", title: "Caçador", job: "Caçador", level: 8, streak: 7, power: 240, missions: 12, skills: 1, summons: 0, gold: 360, points: 5, summonId: "coruja", trial: "pulse", blurb: "Uma semana inteira. Acerte o pulso quando ele cruzar o centro." },
-  { id: "B", name: "Rank B", title: "Algoz", job: "Algoz", level: 14, streak: 14, power: 380, missions: 25, skills: 3, summons: 1, gold: 640, points: 6, summonId: "lamina", trial: "precision", blurb: "Duas semanas de disciplina. Toque os selos antes que se apaguem." },
-  { id: "A", name: "Rank A", title: "Ascendente", job: "Ascendente", level: 22, streak: 21, power: 540, missions: 40, skills: 5, summons: 2, gold: 980, points: 8, skillId: "manto", trial: "memory", blurb: "Vinte e um dias. A memória agora é mais longa." },
-  { id: "S", name: "Rank S", title: "Soberano", job: "Soberano", level: 32, streak: 30, power: 780, missions: 60, skills: 7, summons: 3, gold: 1600, points: 10, summonId: "vulto", skillId: "comando", trial: "abyss", blurb: "Um mês sem quebrar. Ignore tudo o que pedir para você parar." },
-  { id: "M", name: "Monarca", title: "Monarca do Véu", job: "Monarca do Véu", level: 45, streak: 45, power: 1100, missions: 90, skills: 8, summons: 4, gold: 3200, points: 15, skillId: "presenca", trial: "oath", blurb: "Poder avassalador não é um título emprestado. É o que sobra depois de não faltar." },
+  { id: "E", name: "Rank E", title: "Desperto", job: "Desperto", level: 1, streak: 0, power: 0, missions: 0, skills: 0, gold: 80, points: 3, trial: "hold", blurb: "Segure o selo. Existir já é a primeira prova." },
+  { id: "D", name: "Rank D", title: "Rastreado", job: "Rastreado", level: 4, streak: 3, power: 160, missions: 4, skills: 0, gold: 200, points: 4, trial: "memory", blurb: "Três dias sem falhar. Depois, repita a sequência que o sistema mostrar." },
+  { id: "C", name: "Rank C", title: "Caçador", job: "Caçador", level: 8, streak: 7, power: 240, missions: 12, skills: 1, dungeon: "D", gold: 360, points: 5, trial: "pulse", blurb: "Uma semana inteira. Acerte o pulso quando ele cruzar o centro." },
+  { id: "B", name: "Rank B", title: "Algoz", job: "Algoz", level: 14, streak: 14, power: 380, missions: 25, skills: 3, dungeon: "C", gold: 640, points: 6, trial: "precision", blurb: "Duas semanas de disciplina. Toque os selos antes que se apaguem." },
+  { id: "A", name: "Rank A", title: "Ascendente", job: "Ascendente", level: 22, streak: 21, power: 540, missions: 40, skills: 5, dungeon: "B", gold: 980, points: 8, skillId: "manto", trial: "memory", blurb: "Vinte e um dias. A memória agora é mais longa." },
+  { id: "S", name: "Rank S", title: "Soberano", job: "Soberano", level: 32, streak: 30, power: 780, missions: 60, skills: 7, dungeon: "A", gold: 1600, points: 10, skillId: "comando", trial: "abyss", blurb: "Um mês sem quebrar. Ignore tudo o que pedir para você parar." },
+  { id: "M", name: "Monarca", title: "Monarca do Véu", job: "Monarca do Véu", level: 45, streak: 45, power: 1100, missions: 90, skills: 8, dungeon: "S", gold: 3200, points: 15, skillId: "presenca", trial: "oath", blurb: "Poder avassalador não é um título emprestado. É o que sobra depois de não faltar." },
 ];
 
 export const RANK_BY_ID = Object.fromEntries(RANKS.map((r) => [r.id, r])) as Record<RankId, RankDef>;

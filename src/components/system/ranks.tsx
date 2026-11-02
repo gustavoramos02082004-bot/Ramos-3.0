@@ -18,14 +18,14 @@ export function RanksPanel() {
   const [note, setNote] = useState("");
 
   const unlocked = data.skills.filter((skill) => skill.unlocked).length;
-  const obtained = data.summons.filter((summon) => summon.obtained).length;
 
   return (
     <div className="flex flex-col gap-4">
       <Frame title="Rank">
         <p className="font-display text-4xl text-gold">{view.rankLabel}</p>
         <p className="mt-1 text-sm text-muted">
-          De E até S, e além: Monarca. Cada prova só abre quando o corpo, a sequência e o poder acompanham.
+          De E até S, e além: Monarca. Cada rank abre uma dungeon, e o próximo rank só libera depois que o boss dela
+          cair.
         </p>
       </Frame>
       {RANKS.map((rank, index) => {
@@ -38,7 +38,9 @@ export function RanksPanel() {
         if (view.power < rank.power) reasons.push(`Poder ${rank.power} (atual ${view.power}).`);
         if (data.totalMissions < rank.missions) reasons.push(`${rank.missions} missões (atual ${data.totalMissions}).`);
         if (unlocked < rank.skills) reasons.push(`${rank.skills} habilidades (atual ${unlocked}).`);
-        if (obtained < rank.summons) reasons.push(`${rank.summons} invocações (atual ${obtained}).`);
+        if (rank.dungeon && !data.dungeonsCleared.includes(rank.dungeon)) {
+          reasons.push(`Concluir a Dungeon Rank ${rank.dungeon} e derrotar o boss.`);
+        }
         const ready = reasons.length === 0 && isNext && !data.penalty.active;
         return (
           <Frame
@@ -49,7 +51,7 @@ export function RanksPanel() {
             <p className="text-sm text-muted">{rank.blurb}</p>
             <p className="mt-2 text-sm text-fg">
               Recompensa: {rank.gold} ouro · {rank.points} pontos
-              {rank.summonId ? " · uma invocação" : ""}
+              {rank.id !== "E" ? ` · abre a ${rank.id === "M" ? "Dungeon do Monarca" : `Dungeon Rank ${rank.id}`}` : ""}
               {rank.skillId ? " · uma habilidade" : ""}
             </p>
             {done ? null : isNext ? (

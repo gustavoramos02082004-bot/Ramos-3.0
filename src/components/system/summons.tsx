@@ -1,14 +1,9 @@
-import sentinela from "@/assets/summons/sentinela.jpg";
-import coruja from "@/assets/summons/coruja.jpg";
-import lamina from "@/assets/summons/lamina.jpg";
-import vulto from "@/assets/summons/vulto.jpg";
 import { SUMMONS } from "@/lib/system/catalog";
 import { derive } from "@/lib/system/derive";
 import { bonusLabel } from "@/lib/system/formulas";
 import { useSystem } from "@/lib/system/store";
+import { SUMMON_ART as ART } from "./summon-art";
 import { Btn, Frame, Meter } from "./ui";
-
-const ART: Record<string, string> = { sentinela, coruja, lamina, vulto };
 
 export function SummonsPanel() {
   const data = useSystem((s) => s.data);
@@ -26,8 +21,8 @@ export function SummonsPanel() {
       }
     >
       <p className="mb-4 text-sm text-muted">
-        Elas chegam quando o rank sobe, não quando você pede. Ativas, emprestam atributo e poder. A lealdade cresce
-        se estiverem em campo quando uma missão fecha.
+        Cada invocação é a sombra de um boss. Conclua a dungeon do rank dela, derrote o boss e ordene que se levante.
+        Ativas, emprestam atributo, poder e lutam ao seu lado nas dungeons. A lealdade cresce em missões e incursões.
       </p>
       <div className="grid gap-3 sm:grid-cols-2">
         {SUMMONS.map((def) => {
@@ -43,10 +38,14 @@ export function SummonsPanel() {
                 </div>
               )}
               <div className="p-3">
-                <p className="text-xs tracking-widest text-gold uppercase">{obtained ? def.title : "Sinal ausente"}</p>
+                <p className="text-xs tracking-widest text-gold uppercase">
+                  {obtained ? def.title : def.dungeon === "M" ? "Dungeon do Monarca" : `Dungeon Rank ${def.dungeon}`}
+                </p>
                 <h3 className="font-display text-lg text-fg">{obtained ? def.name : "???"}</h3>
                 <p className="mt-2 text-sm text-muted">
-                  {obtained ? def.lore : "Ainda não há resposta. Suba de rank."}
+                  {obtained
+                    ? def.lore
+                    : `Derrote o boss da ${def.dungeon === "M" ? "Dungeon do Monarca" : `Dungeon Rank ${def.dungeon}`} para extrair esta sombra.`}
                 </p>
                 {obtained && progress ? (
                   <>

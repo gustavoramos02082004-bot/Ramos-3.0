@@ -1,12 +1,15 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import {
+  DUNGEON_BY_ID,
+  DUNGEON_FATIGUE,
   ITEM_BY_ID,
   RANK_BY_ID,
   REWARD,
   SKILL_BY_ID,
   SKILLS,
   SUMMON_BY_ID,
+  SUMMONS,
 } from "./catalog";
 import { derive } from "./derive";
 import {
@@ -94,7 +97,7 @@ export function initialData(): Data {
     skills: initialSkills(),
     ownedItems: [],
     equipped: {},
-    summons: ["sentinela", "coruja", "lamina", "vulto"].map((id) => ({
+    summons: SUMMONS.map(({ id }) => ({
       id,
       obtained: false,
       loyalty: 0,
@@ -105,6 +108,7 @@ export function initialData(): Data {
     bestStreak: 0,
     totalMissions: 0,
     ranksCleared: [],
+    dungeonsCleared: [],
     lastSeenDate: null,
     penalty: { active: false, stacks: 0 },
     log: [],
@@ -182,6 +186,9 @@ export function normalize(partial?: Partial<Data>): Data {
       equipped: partial.equipped ?? {},
       ownedItems: Array.isArray(partial.ownedItems) ? partial.ownedItems : [],
       ranksCleared: (partial.ranksCleared ?? []).filter((rank) => RANK_IDS.has(rank)),
+      dungeonsCleared: Array.isArray(partial.dungeonsCleared)
+        ? partial.dungeonsCleared.filter((rank) => RANK_IDS.has(rank))
+        : [],
       log: Array.isArray(partial.log) ? partial.log.slice(0, 40) : [],
       level: Math.max(1, partial.level || 1),
       xp: Math.max(0, partial.xp || 0),
@@ -314,6 +321,20 @@ function unlockSkill(data: Data, id: string): { data: Data; note?: string } {
     },
     note: `Habilidade desperta: ${def.name}.`,
   };
+}
+
+function grantXp(data: Data, amount: number): { data: Data; levels: number[] } {
+  let xp = data.xp + amount;
+  let level = data.level;
+  let statPoints = data.statPoints;
+  const levels: number[] = [];
+  while (level < 99 && xp >= xpForLevel(level)) {
+    xp -= xpForLevel(level);
+    level += 1;
+    statPoints += 3;
+    levels.push(level);
+  }
+  return { data: { ...data, xp, level, statPoints, totalXp: data.totalXp + amount }, levels };
 }
 
 function afterMission(data: Data, mission: Mission): { data: Data; notes: string[]; levels: number[] } {
@@ -475,6 +496,8 @@ type Actions = {
   toggleSkill: (id: string) => void;
   toggleSummon: (id: string) => void;
   passRank: (id: RankId) => void;
+  enterDungeon: (id: RankId) => boolean;
+  finishDungeon: (id: RankId, won: boolean) => void;
   clearPenalty: () => void;
   dismissToast: (id: string) => void;
   dismissFanfare: () => void;
@@ -835,14 +858,13 @@ export const useSystem = create<Store>()(
           const def = RANK_BY_ID[id];
           const view = derive(data);
           const unlocked = data.skills.filter((skill) => skill.unlocked).length;
-          const obtained = data.summons.filter((summon) => summon.obtained).length;
           if (
             data.level < def.level ||
             data.streak < def.streak ||
             view.power < def.power ||
             data.totalMissions < def.missions ||
             unlocked < def.skills ||
-            obtained < def.summons
+            (def.dungeon && !data.dungeonsCleared.includes(def.dungeon))
           ) {
             return;
           }
@@ -854,16 +876,7 @@ export const useSystem = create<Store>()(
             earnedTitle: def.title,
           };
           const notes = [`${def.name} conquistado. +${def.gold} ouro, +${def.points} pontos.`];
-          if (def.summonId) {
-            const summon = SUMMON_BY_ID[def.summonId];
-            next = {
-              ...next,
-              summons: next.summons.map((item) =>
-                item.id === def.summonId ? { ...item, obtained: true, loyalty: Math.max(item.loyalty, 8) } : item,
-              ),
-            };
-            if (summon) notes.push(`${summon.name} respondeu ao chamado.`);
-          }
+          if (DUNGEON_BY_ID[id]) notes.push(`O portal da Dungeon ${id === "M" ? "do Monarca" : `Rank ${id}`} se abriu.`);
           if (def.skillId) {
             const unlockedSkill = unlockSkill(next, def.skillId);
             next = unlockedSkill.data;
@@ -880,6 +893,75 @@ export const useSystem = create<Store>()(
             },
             notices,
           );
+        },
+        enterDungeon(id) {
+          const { data, notices } = live();
+          const dungeon = DUNGEON_BY_ID[id];
+          if (!dungeon) return false;
+          const fail = (text: string) => {
+            commit({ data, notes: [text], tone: "bad" }, notices);
+            return false;
+          };
+          if (data.penalty.active) return fail("A zona de penalidade está aberta.");
+          if (!data.ranksCleared.includes(id)) return fail(`O portal exige ${RANK_BY_ID[id].name}.`);
+          if (data.fatigue + DUNGEON_FATIGUE > 100) return fail("Fadiga alta demais para atravessar o portal.");
+          commit(
+            {
+              data: {
+                ...data,
+                fatigue: data.fatigue + DUNGEON_FATIGUE,
+                log: pushLog(data.log, `Entrou em ${dungeon.name}.`),
+              },
+            },
+            notices,
+          );
+          return true;
+        },
+        finishDungeon(id, won) {
+          const data = get().data;
+          const dungeon = DUNGEON_BY_ID[id];
+          if (!dungeon) return;
+          if (!won) {
+            commit({
+              data: { ...data, log: pushLog(data.log, `Derrota em ${dungeon.name}.`) },
+              notes: ["Você foi expulso da dungeon. O boss continua de pé."],
+              tone: "bad",
+              chime: "bad",
+            });
+            return;
+          }
+          const first = !data.dungeonsCleared.includes(id);
+          const factor = first ? 1 : 0.4;
+          const gold = Math.round(dungeon.gold * factor);
+          const granted = grantXp(data, Math.round(dungeon.xp * factor));
+          const summonDef = SUMMON_BY_ID[dungeon.summonId];
+          const alreadyOwned = data.summons.some((s) => s.id === dungeon.summonId && s.obtained);
+          const notes = [`${dungeon.name} concluída. +${gold} ouro, +${Math.round(dungeon.xp * factor)} XP.`];
+          if (!alreadyOwned && summonDef) notes.push(`Extração concluída: ${summonDef.name} agora é sua invocação.`);
+          let next: Data = {
+            ...granted.data,
+            gold: data.gold + gold,
+            dungeonsCleared: first ? [...data.dungeonsCleared, id] : data.dungeonsCleared,
+            summons: data.summons.map((s) => {
+              if (s.id === dungeon.summonId && !s.obtained) return { ...s, obtained: true, loyalty: 10 };
+              if (s.active && s.obtained) return { ...s, loyalty: Math.min(100, s.loyalty + 6) };
+              return s;
+            }),
+          };
+          next = { ...next, log: notes.reduce((log, text) => pushLog(log, text), next.log) };
+          const levels = granted.levels;
+          commit({
+            data: next,
+            notes,
+            tone: "good",
+            chime: "great",
+            fanfare:
+              !alreadyOwned && summonDef
+                ? { kind: "arise", summonId: summonDef.id }
+                : levels.length
+                  ? { kind: "level", level: levels[levels.length - 1] }
+                  : undefined,
+          });
         },
         clearPenalty() {
           const data = get().data;

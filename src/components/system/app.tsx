@@ -1,4 +1,7 @@
-import { CalendarDays, Crown, ScrollText, Shield, Sparkles, Store, Swords } from "lucide-react";
+import { CalendarDays, Castle, Crown, ScrollText, Shield, Sparkles, Store, Swords } from "lucide-react";
+import { SUMMON_BY_ID } from "@/lib/system/catalog";
+import { DungeonsPanel } from "./dungeons";
+import { SUMMON_ART } from "./summon-art";
 import { useEffect, useState } from "react";
 import hunter from "@/assets/hunter.jpg";
 import { derive } from "@/lib/system/derive";
@@ -20,6 +23,7 @@ const TABS = [
   { id: "habilidades", label: "Habilidades", icon: Sparkles },
   { id: "loja", label: "Loja", icon: Store },
   { id: "rank", label: "Rank", icon: Shield },
+  { id: "dungeons", label: "Dungeons", icon: Castle },
   { id: "invocacoes", label: "Invocações", icon: Crown },
   { id: "diario", label: "Diário", icon: CalendarDays },
 ] as const;
@@ -176,6 +180,7 @@ function Shell() {
           {tab === "habilidades" ? <SkillsPanel /> : null}
           {tab === "loja" ? <ShopPanel /> : null}
           {tab === "rank" ? <RanksPanel /> : null}
+          {tab === "dungeons" ? <DungeonsPanel /> : null}
           {tab === "invocacoes" ? <SummonsPanel /> : null}
           {tab === "diario" ? <JournalPanel /> : null}
         </main>
@@ -281,6 +286,27 @@ function Fanfare() {
   const fanfare = useSystem((s) => s.fanfare);
   const actions = useSystem((s) => s.actions);
   if (!fanfare) return null;
+  if (fanfare.kind === "arise") {
+    const summon = SUMMON_BY_ID[fanfare.summonId];
+    return (
+      <div className="fixed inset-0 z-40 flex items-center justify-center bg-bg/90 px-4">
+        <section className="sys-frame w-full max-w-md p-6 text-center">
+          <p className="text-xs tracking-widest text-primary uppercase">Extração concluída</p>
+          <img
+            src={SUMMON_ART[fanfare.summonId]}
+            alt={summon?.name ?? ""}
+            className="mx-auto mt-4 size-48 border border-primary object-cover"
+          />
+          <p className="mt-4 font-display text-3xl text-primary glow-num">{summon?.name}</p>
+          <p className="mt-1 text-gold">{summon?.title}</p>
+          <p className="mt-3 text-muted">A sombra se ajoelhou. Ative-a na aba Invocações.</p>
+          <Btn className="mt-5 w-full" onClick={() => actions.dismissFanfare()}>
+            Continuar
+          </Btn>
+        </section>
+      </div>
+    );
+  }
   const levelUp = fanfare.kind === "level";
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-bg/80 px-4">
